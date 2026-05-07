@@ -1,4 +1,5 @@
-
 *.codekit3
-
 config.codekit3
+node_modules/
+npm-debug.log*
+.DS_Store

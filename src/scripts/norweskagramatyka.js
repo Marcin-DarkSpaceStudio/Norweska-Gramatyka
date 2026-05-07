@@ -80,6 +80,19 @@ var grammar = function() {
     ],
   };
 
+  function trackEvent( name, data ) {
+
+    if (
+      window.tianji &&
+      typeof window.tianji.track === 'function'
+    ) {
+
+      window.tianji.track( name, data || {} );
+
+    }
+
+  }
+
 
   function init() {
 
@@ -213,7 +226,9 @@ var grammar = function() {
 
       showDebugMsg( 'hash: ' + hash );
 
-      ga('send', 'event', 'Problems', '#' + hash, "Hash");
+      trackEvent( 'problem_select', {
+        problem: hash
+      } );
 
       //  check if it is a sublist
       if ( sublists.hasOwnProperty( hash ) ) {
@@ -250,7 +265,9 @@ var grammar = function() {
     //  it should be outbound link
     else if ( url && ( url !== currentUrl ) ) {
 
-      ga('send', 'event', 'Outgoing', url, 'Link');
+      trackEvent( 'outgoing_link', {
+        url: url
+      } );
 
     }
 
@@ -267,7 +284,10 @@ var grammar = function() {
 
       showDebugMsg( 'aidId: ' + aidEl.id + ' | feedback: ' + feedback );
 
-      ga('send', 'event', 'Feedback', '#' + aidEl.id, feedback);
+      trackEvent( 'feedback', {
+        item: aidEl.id,
+        value: feedback
+      } );
 
       showFeedback( event.target );
 
@@ -431,28 +451,71 @@ var grammar = function() {
 
   }
 
+  function getParentWithClass( el, className ) {
 
-  function showFeedback( el ) {
+    var parent = el;
+    var currentClass;
 
-    var parent = el.parentNode;
-    var thanks = document.createElement('div');
+    while ( parent && parent !== document.body ) {
 
-    while ( parent.className !== 'aid-footer__faces') {
+      currentClass = parent.className;
+
+      if (
+        typeof currentClass === 'string' &&
+        ( ' ' + currentClass + ' ' ).indexOf( ' ' + className + ' ' ) >= 0
+      ) {
+
+        return parent;
+
+      }
 
       parent = parent.parentNode;
 
     }
+
+    return false;
+
+  }
+
+
+  function showFeedback( el ) {
+
+    var parent = getParentWithClass( el, 'aid-footer__faces' );
+    var thanks = document.createElement('div');
+
+    if ( !parent ) {
+
+      return;
+
+    }
+
+    if ( parent.getAttribute( 'data-feedback-shown' ) === 'true' ) {
+
+      return;
+
+    }
+
+    parent.setAttribute( 'data-feedback-shown', 'true' );
 
     thanks.className = 'aid-feedback-thanks';
     thanks.innerHTML = 'Takk for tilbakemeldingen!';
 
     parent.appendChild( thanks );
 
-    Velocity(
-      thanks,
-      'slideDown',
-      { duration: 300, easing: 'easeInOutQuart' }
-    );
+    if ( typeof Velocity === 'function' ) {
+
+      Velocity(
+        thanks,
+        'slideDown',
+        { duration: 300, easing: 'easeInOutQuart' }
+      );
+
+    }
+    else {
+
+      thanks.style.display = 'block';
+
+    }
 
   }
 
